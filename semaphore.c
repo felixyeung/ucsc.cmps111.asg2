@@ -192,7 +192,8 @@ public int do_semdown(int sem, struct mproc *rmp) {
 		if (semaphores[index] < 0) {
 			//append caller into queue
 			
-			//extract pid from object struct to put into queue
+			//extract pid from object struct to put into queue for semaphores[index]
+			push(index, rmp->mp_pid)
 			
 			//FROM signals.c:do_pause()
 			mp->mp_flags |= PAUSED;
