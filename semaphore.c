@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <sys/resource.h>
 #include <sys/sigcontext.h>
+#include <lib.h>
 #include <string.h>
 #include <errno.h>
 #include "mproc.h"
@@ -204,12 +205,14 @@ PUBLIC int do_semup(void) {
 
 /*INSTEAD OF PASSING IN A MPROC AS AN ARGUMENT, WE JUST WANT TO RECEIVE A MESSAGE OF THE PID*/
 
-PUBLIC int do_semdown(void) 
+PUBLIC int do_semdown(void) { 
 	int identifier;
 	identifier = m_in.m1_i1;
 
+	register struct mproc* rmp = &mproc[m_in.m1_i2];
+	
 	int pid;
-	pid = m_in.m1_i2;
+	pid = rmp->mp_id;
 	
 	int index;
 	index = get_index(identifier, semas_identifiers);
