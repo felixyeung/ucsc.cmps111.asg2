@@ -185,10 +185,13 @@ public int do_semup(int sem) {
 	return -1;
 }
 
+
+/*INSTEAD OF PASSING IN A MPROC AS AN ARGUMENT, WE JUST WANT TO RECEIVE A MESSAGE OF THE PID*/
+
 public int do_semdown(int sem, struct mproc *rmp) {
 	index = get_index(sem, semas_indentifiers);
 	if (index != NULL) {
-		semaphores[index] - 1;
+		semaphores[index] -= 1;
 		if (semaphores[index] < 0) {
 			//append caller into queue
 			
@@ -205,6 +208,7 @@ public int do_semdown(int sem, struct mproc *rmp) {
 			return(100000);
 		}
 	}
+	return(-1234);
 }
 
 public int do_semfree(int sem) {
