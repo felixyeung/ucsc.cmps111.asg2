@@ -17,6 +17,38 @@
 int semaphores[100];
 unsigned int semas_identifiers[100];
 int waiting_procs[100][10]; /*only 10 waiting processes per semaphore*/
+int QUEUESIZE = 10;
+int front[100];
+int end[100];
+
+/* return true if our process queue is empty */
+private int empty(int sem_index) {
+	if (front[sem_index] == end[sem_index])
+		return 1;
+	return 0;
+}
+ 
+ /*return 1 if success to append to queue, else return 0*/
+ private int push(int sem_index, int value) {
+	if ((end[sem_index] + 1) % QUEUESIZE == front[sem_index])
+		return 0;
+	else {
+		//increment end
+		end[sem_index] = (end[sem_index] + 1) % QUEUESIZE;
+		waiting_procs[sem_index][end[sem_index]] = value;
+		return 1;
+	}
+ }
+ 
+ private int leftpop(int sem_index) {
+	int result = NULL;
+	if (!empty(sem_index))
+		front[sem_index] = (front[sem_index] + 1) % QUEUESIZE;
+		result = waiting_procs[sem_index][front[sem_index]];
+	}
+	return result;
+ }
+
 
 private int find_first_free(int* semas_identifiers) {
 	int i;
@@ -48,6 +80,7 @@ private int is_in_use(int sem, int* semas_identifiers) {
 }
 
 private int get_index(int sem, int* semas_identifiers);
+	int i;
 	int i;
 	int result;
 	result = NULL;
@@ -107,29 +140,40 @@ public int do_semvalue(int sem) [
 /*
 Resolve index from indentifier, increment this semaphore by one.
 if there's a waiting proc in queue, pop it and wake it.
+TODO: confirm return codes
+return 0 on success;
+return pid on success and process pop
+return -1 if we cant resolve the correct semaphore
 */
 public int do_semup(int sem) {
 	index = get_index(sem, semas_indentifiers);
 	if (index != NULL) {
 		semaphores[index] += 1;
 		if (semaphores[index] > 0) {
-			//if (!empty(waiting_procs[index])) {
+			if (!empty(index)) {
+				int pid;
+				pid = NULL;
+				pid = leftpop(index);
 				//TODO:
-				//p = popleft(waiting_procs[index]);
-				//wake(p);
-			//}
+				//EXPLICITLY WAKE A PROCESS?
+				return pid;
+			}
 		}
+		return 0;
 	}
-	//else fail
+	return -1;
 }
 
-public int do_semdown(int sem) {
+public int do_semdown(int sem, struct mproc *rmp) {
 	index = get_index(sem, semas_indentifiers);
 	if (index != NULL) {
 		semaphores[index] - 1;
 		if (semaphores[index] < 0) {
 			//append caller into queue
-			// wait(caller);
+			
+			//FROM signals.c:do_pause()
+			mp->mp_flags |= PAUSED;
+			
 			return(SUSPEND);
 		}
 		else {
