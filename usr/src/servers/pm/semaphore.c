@@ -101,7 +101,7 @@ PUBLIC int do_seminit(void) {
 	value = m_in.m1_i2;
 	
 	int index;
-	if(abs(value) > 1000) {
+	if(value < -1000 || value > 1000) {
 		return EINVAL; /*add to errno.h*/
 	}
 	index = find_first_free(semas_identifiers);
@@ -136,7 +136,7 @@ PUBLIC int do_seminit(void) {
 	
 }
 
-PUBLIC int do_semvalue(void) [
+PUBLIC int do_semvalue(void) {
 	int identifier;
 	identifier = m_in.m1_i1;
 
@@ -167,9 +167,9 @@ PUBLIC int do_semup(void) {
 			if (!empty(index)) {
 				
 				//take a process from the queue
-				int pid;
-				pid = NULL;
-				pid = leftpop(index);
+				int piddie;
+				piddie = NULL;
+				piddie = leftpop(index);
 				//TODO:
 				//EXPLICITLY WAKE A PROCESS?
 				
@@ -183,10 +183,10 @@ PUBLIC int do_semup(void) {
 				 * may occasionally fill in other fields, this is only for the main return
 				 * value, and for setting the "must send reply" flag.
 				 */
-				  register struct mproc *rmp = &mproc[pid];
+				  register struct mproc *rmp = &mproc[piddie];
 
-				  if(pid < 0 || pid >= NR_PROCS)
-					  panic("setreply arg out of range: %d", pid);
+				  if(piddie < 0 || piddie >= NR_PROCS)
+					  panic("setreply arg out of range: %d", piddie);
 
 				  rmp->mp_reply.reply_res = result;
 				  rmp->mp_flags |= REPLY;	/* reply pending */
@@ -194,7 +194,7 @@ PUBLIC int do_semup(void) {
 				
 				  //main.c dispatcher will do sendreply() for us
 				  
-				return pid;
+				return piddie;
 			}
 		}
 		return 0;
@@ -211,8 +211,8 @@ PUBLIC int do_semdown(void) {
 
 	register struct mproc* rmp = &mproc[m_in.m1_i2];
 	
-	int pid;
-	pid = rmp->mp_id;
+	int piddie;
+	piddie = rmp->mp_pid;
 	
 	int index;
 	index = get_index(identifier, semas_identifiers);
@@ -222,7 +222,7 @@ PUBLIC int do_semdown(void) {
 			//append caller into queue
 			
 			//extract pid from object struct to put into queue for semaphores[index]
-			push(index, pid)
+			push(index, piddie);
 			
 			//FROM signals.c:do_pause()
 			mp->mp_flags |= PAUSED;
@@ -246,7 +246,7 @@ PUBLIC int do_semfree() {
 	if (index != NULL) {
 		// if queue is empty, free
 		if (empty(index)) {
-			 sempahores[index] = NULL;
+			 semaphores[index] = NULL;
 			 semas_identifiers[index] = NULL;
 			 return 1;
 		}
