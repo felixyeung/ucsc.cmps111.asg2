@@ -183,4 +183,15 @@ public int do_semdown(int sem, struct mproc *rmp) {
 	}
 }
 
-public int do_semfree(int sem);
+public int do_semfree(int sem) {
+	index = get_index(sem, semas_indentifiers);
+	if (index != NULL) {
+		// if queue is empty, free
+		if (empty(index)) {
+			 sempahores[index] = NULL;
+			 semas_indentifiers[index] = NULL;
+			 return 1;
+		}
+	}
+	return 0;
+}
