@@ -79,8 +79,7 @@ private int is_in_use(int sem, int* semas_identifiers) {
 	return result;
 }
 
-private int get_index(int sem, int* semas_identifiers);
-	int i;
+private int get_index(int sem, int* semas_identifiers) {
 	int i;
 	int result;
 	result = NULL;
@@ -93,7 +92,13 @@ private int get_index(int sem, int* semas_identifiers);
 	return result;
 }
 
-public int do_seminit(int sem, int value) {
+public int do_seminit(void) {
+	int indentifier;
+	indentifier = m_in.m1_i1;
+	
+	int value;
+	value = m_in.m1_i2;
+	
 	int index;
 	if(abs(value) > 1000) {
 		return EINVAL; /*add to errno.h*/
@@ -102,11 +107,11 @@ public int do_seminit(int sem, int value) {
 	if(index == NULL) {
 		return EAGAIN;
 	}
-	if(sem > 0) {
-		if is_in_use(sem, semas_identifiers) {
+	if(indentifier > 0) {
+		if is_in_use(indentifier, semas_identifiers) {
 			return EEXIST;
 		}
-		semas_identifiers[index] = sem;
+		semas_identifiers[index] = indentifier;
 		semaphores[index] = value;
 		return sem;
 	} else if(sem == 0) {
@@ -130,8 +135,11 @@ public int do_seminit(int sem, int value) {
 	
 }
 
-public int do_semvalue(int sem) [
-	index = get_index(sem, semas_indentifiers);
+public int do_semvalue(void) [
+	int indentifier;
+	indentifier = m_in.m1_i1;
+
+	index = get_index(indentifier, semas_indentifiers);
 	if (index != NULL)
 		return semaphores[index];
 	//else, return some error
@@ -145,17 +153,44 @@ return 0 on success;
 return pid on success and process pop
 return -1 if we cant resolve the correct semaphore
 */
-public int do_semup(int sem) {
-	index = get_index(sem, semas_indentifiers);
+public int do_semup(void) {
+	int indentifier;
+	indentifier = m_in.m1_i1;
+
+	index = get_index(indentifier, semas_indentifiers);
 	if (index != NULL) {
 		semaphores[index] += 1;
 		if (semaphores[index] > 0) {
 			if (!empty(index)) {
+				
+				//take a process from the queue
 				int pid;
 				pid = NULL;
 				pid = leftpop(index);
 				//TODO:
 				//EXPLICITLY WAKE A PROCESS?
+				
+				//we need to return some kind of result
+				int result;
+				result = 1234;
+				
+				//COPIED FROM SETREPLY
+				
+				/* Fill in a reply message to be sent later to a user process.  System calls
+				 * may occasionally fill in other fields, this is only for the main return
+				 * value, and for setting the "must send reply" flag.
+				 */
+				  register struct mproc *rmp = &mproc[pid];
+
+				  if(pid < 0 || pid >= NR_PROCS)
+					  panic("setreply arg out of range: %d", pid);
+
+				  rmp->mp_reply.reply_res = result;
+				  rmp->mp_flags |= REPLY;	/* reply pending */
+				
+				
+				  //main.c dispatcher will do sendreply() for us
+				  
 				return pid;
 			}
 		}
@@ -164,12 +199,24 @@ public int do_semup(int sem) {
 	return -1;
 }
 
-public int do_semdown(int sem, struct mproc *rmp) {
-	index = get_index(sem, semas_indentifiers);
+
+/*INSTEAD OF PASSING IN A MPROC AS AN ARGUMENT, WE JUST WANT TO RECEIVE A MESSAGE OF THE PID*/
+
+public int do_semdown(void) 
+	int indentifier;
+	indentifier = m_in.m1_i1;
+
+	int pid;
+	pid = m_in.m1_i2;
+	
+	index = get_index(indentifier, semas_indentifiers);
 	if (index != NULL) {
-		semaphores[index] - 1;
+		semaphores[index] -= 1;
 		if (semaphores[index] < 0) {
 			//append caller into queue
+			
+			//extract pid from object struct to put into queue for semaphores[index]
+			push(index, pid)
 			
 			//FROM signals.c:do_pause()
 			mp->mp_flags |= PAUSED;
@@ -181,10 +228,14 @@ public int do_semdown(int sem, struct mproc *rmp) {
 			return(100000);
 		}
 	}
+	return(-1234);
 }
 
-public int do_semfree(int sem) {
-	index = get_index(sem, semas_indentifiers);
+public int do_semfree() {
+	int indentifier;
+	indentifier = m_in.m1_i1;
+	
+	index = get_index(indentifier, semas_indentifiers);
 	if (index != NULL) {
 		// if queue is empty, free
 		if (empty(index)) {
