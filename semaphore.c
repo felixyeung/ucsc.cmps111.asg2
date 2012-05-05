@@ -79,8 +79,7 @@ private int is_in_use(int sem, int* semas_identifiers) {
 	return result;
 }
 
-private int get_index(int sem, int* semas_identifiers);
-	int i;
+private int get_index(int sem, int* semas_identifiers) {
 	int i;
 	int result;
 	result = NULL;
@@ -156,6 +155,28 @@ public int do_semup(int sem) {
 				pid = leftpop(index);
 				//TODO:
 				//EXPLICITLY WAKE A PROCESS?
+				
+				//we need to return some kind of result
+				int result;
+				result = 1234;
+				
+				//COPIED FROM SETREPLY
+				
+				/* Fill in a reply message to be sent later to a user process.  System calls
+				 * may occasionally fill in other fields, this is only for the main return
+				 * value, and for setting the "must send reply" flag.
+				 */
+				  register struct mproc *rmp = &mproc[pid];
+
+				  if(pid < 0 || pid >= NR_PROCS)
+					  panic("setreply arg out of range: %d", pid);
+
+				  rmp->mp_reply.reply_res = result;
+				  rmp->mp_flags |= REPLY;	/* reply pending */
+				
+				
+				  //main.c dispatcher will do sendreply() for us
+				  
 				return pid;
 			}
 		}
@@ -170,6 +191,8 @@ public int do_semdown(int sem, struct mproc *rmp) {
 		semaphores[index] - 1;
 		if (semaphores[index] < 0) {
 			//append caller into queue
+			
+			//extract pid from object struct to put into queue
 			
 			//FROM signals.c:do_pause()
 			mp->mp_flags |= PAUSED;
