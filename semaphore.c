@@ -22,14 +22,14 @@ int front[100];
 int end[100];
 
 /* return true if our process queue is empty */
-private int empty(int sem_index) {
+PRIVATE int empty(int sem_index) {
 	if (front[sem_index] == end[sem_index])
 		return 1;
 	return 0;
 }
  
  /*return 1 if success to append to queue, else return 0*/
- private int push(int sem_index, int value) {
+ PRIVATE int push(int sem_index, int value) {
 	if ((end[sem_index] + 1) % QUEUESIZE == front[sem_index])
 		return 0;
 	else {
@@ -40,9 +40,9 @@ private int empty(int sem_index) {
 	}
  }
  
- private int leftpop(int sem_index) {
+ PRIVATE int leftpop(int sem_index) {
 	int result = NULL;
-	if (!empty(sem_index))
+	if (!empty(sem_index)) {
 		front[sem_index] = (front[sem_index] + 1) % QUEUESIZE;
 		result = waiting_procs[sem_index][front[sem_index]];
 	}
@@ -50,13 +50,13 @@ private int empty(int sem_index) {
  }
 
 
-private int find_first_free(int* semas_identifiers) {
+PRIVATE int find_first_free(int* semas_identifiers) {
 	int i;
 	int result;
 	result = NULL;
 	for (i = 0; i < 100;  i++) {
-		//remember to unset semas_indentifier in semfree() so we can do this
-		if (semas_indentifiers[i] == NULL) {
+		//remember to unset semas_identifier in semfree() so we can do this
+		if (semas_identifiers[i] == NULL) {
 			result = i;
 			break;
 		}
@@ -64,14 +64,14 @@ private int find_first_free(int* semas_identifiers) {
 	return result;
 }
 
-private int is_in_use(int sem, int* semas_identifiers) {
+PRIVATE int is_in_use(int sem, int* semas_identifiers) {
 	int i;
 	int result;
 	//0 = is not in use
 	//1 = is in use;
 	result = 0;
 	for (i = 0; i < 100;  i++) {
-		if (semas_indentifiers[i] == sem) {
+		if (semas_identifiers[i] == sem) {
 			result = 1;
 			break;
 		}
@@ -79,12 +79,12 @@ private int is_in_use(int sem, int* semas_identifiers) {
 	return result;
 }
 
-private int get_index(int sem, int* semas_identifiers) {
+PRIVATE int get_index(int sem, int* semas_identifiers) {
 	int i;
 	int result;
 	result = NULL;
 	for (i = 0; i < 100;  i++) {
-		if (semas_indentifiers[i] == sem) {
+		if (semas_identifiers[i] == sem) {
 			result = i;
 			break;
 		}
@@ -92,9 +92,9 @@ private int get_index(int sem, int* semas_identifiers) {
 	return result;
 }
 
-public int do_seminit(void) {
-	int indentifier;
-	indentifier = m_in.m1_i1;
+PUBLIC int do_seminit(void) {
+	int identifier;
+	identifier = m_in.m1_i1;
 	
 	int value;
 	value = m_in.m1_i2;
@@ -107,14 +107,14 @@ public int do_seminit(void) {
 	if(index == NULL) {
 		return EAGAIN;
 	}
-	if(indentifier > 0) {
-		if is_in_use(indentifier, semas_identifiers) {
+	if(identifier > 0) {
+		if (is_in_use(identifier, semas_identifiers)) {
 			return EEXIST;
 		}
-		semas_identifiers[index] = indentifier;
+		semas_identifiers[index] = identifier;
 		semaphores[index] = value;
-		return sem;
-	} else if(sem == 0) {
+		return identifier;
+	} else if(identifier == 0) {
 		unsigned int i;
 		int name = NULL;
 		for(int i=1; i < 2147483648; i++) {
@@ -127,7 +127,7 @@ public int do_seminit(void) {
 			return EAGAIN;
 		}
 		semas_identifiers[index] = name;
-		semaphore[index] = value;
+		semaphores[index] = value;
 		return name;
 	} else {
 		return EINVAL; /*negative identifier*/
@@ -135,29 +135,31 @@ public int do_seminit(void) {
 	
 }
 
-public int do_semvalue(void) [
-	int indentifier;
-	indentifier = m_in.m1_i1;
+PUBLIC int do_semvalue(void) [
+	int identifier;
+	identifier = m_in.m1_i1;
 
-	index = get_index(indentifier, semas_indentifiers);
+	int index;
+	index = get_index(identifier, semas_identifiers);
 	if (index != NULL)
 		return semaphores[index];
 	//else, return some error
 }
 
 /*
-Resolve index from indentifier, increment this semaphore by one.
+Resolve index from identifier, increment this semaphore by one.
 if there's a waiting proc in queue, pop it and wake it.
 TODO: confirm return codes
 return 0 on success;
 return pid on success and process pop
 return -1 if we cant resolve the correct semaphore
 */
-public int do_semup(void) {
-	int indentifier;
-	indentifier = m_in.m1_i1;
-
-	index = get_index(indentifier, semas_indentifiers);
+PUBLIC int do_semup(void) {
+	int identifier;
+	identifier = m_in.m1_i1;
+	
+	int index;
+	index = get_index(identifier, semas_identifiers);
 	if (index != NULL) {
 		semaphores[index] += 1;
 		if (semaphores[index] > 0) {
@@ -202,14 +204,15 @@ public int do_semup(void) {
 
 /*INSTEAD OF PASSING IN A MPROC AS AN ARGUMENT, WE JUST WANT TO RECEIVE A MESSAGE OF THE PID*/
 
-public int do_semdown(void) 
-	int indentifier;
-	indentifier = m_in.m1_i1;
+PUBLIC int do_semdown(void) 
+	int identifier;
+	identifier = m_in.m1_i1;
 
 	int pid;
 	pid = m_in.m1_i2;
 	
-	index = get_index(indentifier, semas_indentifiers);
+	int index;
+	index = get_index(identifier, semas_identifiers);
 	if (index != NULL) {
 		semaphores[index] -= 1;
 		if (semaphores[index] < 0) {
@@ -231,16 +234,17 @@ public int do_semdown(void)
 	return(-1234);
 }
 
-public int do_semfree() {
-	int indentifier;
-	indentifier = m_in.m1_i1;
+PUBLIC int do_semfree() {
+	int identifier;
+	identifier = m_in.m1_i1;
 	
-	index = get_index(indentifier, semas_indentifiers);
+	int index;
+	index = get_index(identifier, semas_identifiers);
 	if (index != NULL) {
 		// if queue is empty, free
 		if (empty(index)) {
 			 sempahores[index] = NULL;
-			 semas_indentifiers[index] = NULL;
+			 semas_identifiers[index] = NULL;
 			 return 1;
 		}
 	}
