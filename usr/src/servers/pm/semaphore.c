@@ -129,7 +129,7 @@ PUBLIC int do_seminit(void) {
 		}
 		semas_identifiers[index] = name;
 		semaphores[index] = value;
-		return OK;
+		return 0;
 	} else {
 		return EINVAL; /*negative identifier*/
 	}
@@ -143,7 +143,7 @@ PUBLIC int do_semvalue(void) {
 	int index;
 	index = get_index(identifier, semas_identifiers);
 	if (index != NULL)
-		return OK;
+		return 0;
 	//else, return some error
 }
 
@@ -195,11 +195,11 @@ PUBLIC int do_semup(void) {
 				  //main.c dispatcher will do sendreply() for us
 				  
 				//ret piddie
-				return OK;
+				return 0;
 			}
 		}
 		//we can increment, there are no procs in queue
-		return OK;
+		return 0;
 	}
 	return -1;
 }
@@ -233,7 +233,7 @@ PUBLIC int do_semdown(void) {
 		}
 		else {
 			//nothing. return jibberish?
-			return OK;
+			return 0;
 		}
 	}
 	return -1;
@@ -250,7 +250,7 @@ PUBLIC int do_semfree() {
 		if (empty(index)) {
 			 semaphores[index] = NULL;
 			 semas_identifiers[index] = NULL;
-			 return OK;
+			 return 0;
 		}
 	}
 	return -1;
@@ -261,7 +261,7 @@ PUBLIC int do_semtest() {
 	incoming_message = m_in.m1_i1;
 	
 	if (incoming_message == 1)
-		return OK;
+		return 0;
 	else if (incoming_message == 0)
 		return SUSPEND;
 	else
