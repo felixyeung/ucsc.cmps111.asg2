@@ -8,7 +8,8 @@ int main() {
 	int e;
 	message m;
 	e = errno;
-	i = seminit(1234, 0);
+	seminit(2000, -100);
+	i = semvalue(2000);
 	printf("Test result: i=%d & e=%d\n", i, e);
 	return 0;
 }

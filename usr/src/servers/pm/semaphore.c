@@ -149,7 +149,7 @@ PUBLIC int do_semvalue(void) {
 	int index;
 	index = get_index(identifier, semas_identifiers);
 	if (index != NULL)
-		return semaphores[index];
+		return semaphores[index] + 1000000;
 	//else, return some error
 }
 
