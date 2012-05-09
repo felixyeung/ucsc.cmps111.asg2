@@ -14,12 +14,12 @@
 #include "mproc.h"
 #include "param.h"
 
-static int semaphores[100];
-static unsigned int semas_identifiers[100]; /*semas_identifiers[i]==0 means i is an unused index*/
-static int waiting_procs[100][1024]; /*only 10 waiting processes per semaphore*/
+static int semaphores[101];
+static unsigned int semas_identifiers[101]; /*semas_identifiers[i]==0 means i is an unused index*/
+static int waiting_procs[101][1024]; /*only 10 waiting processes per semaphore*/
 static int QUEUESIZE = 1024;
-static int front[100];
-static int end[100];
+static int front[101];
+static int end[101];
 
 /* return true if our process queue is empty */
 PRIVATE int empty(int sem_index) {
@@ -54,11 +54,12 @@ PRIVATE int find_first_free() {
 	int i;
 	int result;
 	result = NULL;
-	for (i = 0; i < 100;  i++) {
+	for (i = 1; i < 101;  i++) {
 		//remember to unset semas_identifier in semfree() so we can do this
 		if (semas_identifiers[i] == 0) {
 			result = i;
-			break;
+			printf("discovered free\n");
+			return result;
 		}
 	}
 	return result;
@@ -67,7 +68,7 @@ PRIVATE int find_first_free() {
 /*returns 1 if identifier is in use, 0 if not in use*/
 PRIVATE int is_in_use(int sem) {
 	int i;
-	for (i = 0; i < 100;  i++) {
+	for (i = 1; i < 101;  i++) {
 		if (semas_identifiers[i] == sem) {
 			return 1;
 		}
@@ -79,7 +80,7 @@ PRIVATE int get_index(int sem, int* semas_identifiers) {
 	int i;
 	int result;
 	result = NULL;
-	for (i = 0; i < 100;  i++) {
+	for (i = 1; i < 101;  i++) {
 		if (semas_identifiers[i] == sem) {
 			result = i;
 			break;
@@ -109,10 +110,13 @@ printf("index=%d\n", index);
 	if(index == NULL) {
 		return EAGAIN;
 	}
+printf("passed case where eagain is return when no free index is found\n");
 	if(identifier > 0) {
+printf("we are in the case where identifier is >0\n");
 		if (is_in_use(identifier)) {
 			return EEXIST;
 		}
+printf("identifier is not in use\n");
 		semas_identifiers[index] = identifier;
 		semaphores[index] = value;
 		return identifier;
