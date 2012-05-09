@@ -14,13 +14,13 @@
 #include "mproc.h"
 #include "param.h"
 
-
-int semaphores[100];
-unsigned int semas_identifiers[100];
-int waiting_procs[100][10]; /*only 10 waiting processes per semaphore*/
-int QUEUESIZE = 10;
-int front[100];
-int end[100];
+static struct Semaphore semas[100];
+static int semaphores[100];
+static unsigned int semas_identifiers[100]; /*semas_identifiers[i]==0 means i is an unused index*/
+static int waiting_procs[100][1024]; /*only 10 waiting processes per semaphore*/
+static int QUEUESIZE = 1024;
+static int front[100];
+static int end[100];
 
 /* return true if our process queue is empty */
 PRIVATE int empty(int sem_index) {
@@ -51,13 +51,13 @@ PRIVATE int empty(int sem_index) {
  }
 
 
-PRIVATE int find_first_free(int* semas_identifiers) {
+PRIVATE int find_first_free() {
 	int i;
 	int result;
 	result = NULL;
 	for (i = 0; i < 100;  i++) {
 		//remember to unset semas_identifier in semfree() so we can do this
-		if (semas_identifiers[i] == NULL) {
+		if (semas_identifiers[i] == 0) {
 			result = i;
 			break;
 		}
@@ -65,19 +65,15 @@ PRIVATE int find_first_free(int* semas_identifiers) {
 	return result;
 }
 
-PRIVATE int is_in_use(int sem, int* semas_identifiers) {
+/*returns 1 if identifier is in use, 0 if not in use*/
+PRIVATE int is_in_use(int sem) {
 	int i;
-	int result;
-	//0 = is not in use
-	//1 = is in use;
-	result = 0;
 	for (i = 0; i < 100;  i++) {
 		if (semas_identifiers[i] == sem) {
-			result = 1;
-			break;
+			return 1;
 		}
 	}
-	return result;
+	return 0;
 }
 
 PRIVATE int get_index(int sem, int* semas_identifiers) {
@@ -93,7 +89,11 @@ PRIVATE int get_index(int sem, int* semas_identifiers) {
 	return result;
 }
 
+/*initializes a new semaphore,
+returns the identifier if no error*/
 PUBLIC int do_seminit(void) {
+	/*return EINVAL;
+	return who_p;*/
 	int identifier;
 	identifier = m_in.m1_i1;
 	
@@ -104,12 +104,12 @@ PUBLIC int do_seminit(void) {
 	if(value < -1000 || value > 1000) {
 		return EINVAL; /*add to errno.h*/
 	}
-	index = find_first_free(semas_identifiers);
+	index = find_first_free();
 	if(index == NULL) {
 		return EAGAIN;
 	}
 	if(identifier > 0) {
-		if (is_in_use(identifier, semas_identifiers)) {
+		if (is_in_use(identifier)) {
 			return EEXIST;
 		}
 		semas_identifiers[index] = identifier;
@@ -119,7 +119,7 @@ PUBLIC int do_seminit(void) {
 		unsigned int i;
 		int name = NULL;
 		for(int i=1; i < 2147483648; i++) {
-			if(! is_in_use(i, semas_identifiers)) {
+			if(! is_in_use(i)) {
 				name = i;
 				break;
 			}
