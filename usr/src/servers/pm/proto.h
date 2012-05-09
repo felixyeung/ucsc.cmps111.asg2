@@ -69,11 +69,11 @@ _PROTOTYPE( int do_sprofile, (void)					);
 _PROTOTYPE( int do_cprofile, (void)					);
 
 /* semaphore.c */
-_PROTOTYPE( int do_seminit, (int sem, int value)    );
-_PROTOTYPE( int do_semvalue, (int sem)                );
-_PROTOTYPE( int do_semup, (int sem)                    );
-_PROTOTYPE( int do_semdown, (int sem)                );
-_PROTOTYPE( int do_semfree, (int sem)                );
+_PROTOTYPE( int do_seminit, (void)			    		);
+_PROTOTYPE( int do_semvalue, (void)                			);
+_PROTOTYPE( int do_semup, (void)                    			);
+_PROTOTYPE( int do_semdown, (void)                			);
+_PROTOTYPE( int do_semfree, (void)                			);
 
 /* signal.c */
 _PROTOTYPE( int do_kill, (void)						);
