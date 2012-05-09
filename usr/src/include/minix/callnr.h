@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #define NCALLS		 119	/* number of system calls allowed */
+=======
+#define NCALLS		 114	/* number of system calls allowed */
+>>>>>>> bfa4d5bf1ac9684b0a1fa80b78f43ea1fc6729f5
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 

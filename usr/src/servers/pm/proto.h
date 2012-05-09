@@ -69,11 +69,19 @@ _PROTOTYPE( int do_sprofile, (void)					);
 _PROTOTYPE( int do_cprofile, (void)					);
 
 /* semaphore.c */
+<<<<<<< HEAD:usr/src/servers/pm/proto.h
 _PROTOTYPE( int do_seminit, (void)    );
 _PROTOTYPE( int do_semvalue, (void)                );
 _PROTOTYPE( int do_semup, (void)                    );
 _PROTOTYPE( int do_semdown, (void)                );
 _PROTOTYPE( int do_semfree, (void)                );
+=======
+_PROTOTYPE( int do_seminit, (void)			    		);
+_PROTOTYPE( int do_semvalue, (void)                			);
+_PROTOTYPE( int do_semup, (void)                    			);
+_PROTOTYPE( int do_semdown, (void)                			);
+_PROTOTYPE( int do_semfree, (void)                			);
+>>>>>>> bfa4d5bf1ac9684b0a1fa80b78f43ea1fc6729f5:usr/src/servers/pm/proto.h
 
 /* signal.c */
 _PROTOTYPE( int do_kill, (void)						);
