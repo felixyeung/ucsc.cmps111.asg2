@@ -8,7 +8,7 @@ int main() {
 	int e;
 	message m;
 	e = errno;
-	i = seminit(0, 0);
+	i = seminit(1234, 0);
 	printf("Test result: i=%d & e=%d\n", i, e);
 	return 0;
 }
