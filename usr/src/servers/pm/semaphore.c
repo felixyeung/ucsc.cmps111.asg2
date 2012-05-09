@@ -14,7 +14,6 @@
 #include "mproc.h"
 #include "param.h"
 
-static struct Semaphore semas[100];
 static int semaphores[100];
 static unsigned int semas_identifiers[100]; /*semas_identifiers[i]==0 means i is an unused index*/
 static int waiting_procs[100][1024]; /*only 10 waiting processes per semaphore*/
@@ -99,12 +98,14 @@ PUBLIC int do_seminit(void) {
 	
 	int value;
 	value = m_in.m1_i2;
-	
+printf("identifier=%d, value=%d\n", identifier, value);	
 	int index;
 	if(value < -1000 || value > 1000) {
+printf("!!! 1 !!!\n");
 		return EINVAL; /*add to errno.h*/
 	}
 	index = find_first_free();
+printf("index=%d\n", index);
 	if(index == NULL) {
 		return EAGAIN;
 	}
@@ -131,6 +132,7 @@ PUBLIC int do_seminit(void) {
 		semaphores[index] = value;
 		return name;
 	} else {
+printf("!!! 2 !!! \n");
 		return EINVAL; /*negative identifier*/
 	}
 	
