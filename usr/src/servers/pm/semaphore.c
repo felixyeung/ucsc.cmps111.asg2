@@ -99,24 +99,18 @@ PUBLIC int do_seminit(void) {
 	
 	int value;
 	value = m_in.m1_i2;
-printf("identifier=%d, value=%d\n", identifier, value);	
 	int index;
 	if(value < -1000 || value > 1000) {
-printf("!!! 1 !!!\n");
 		return EINVAL; /*add to errno.h*/
 	}
 	index = find_first_free();
-printf("index=%d\n", index);
 	if(index == NULL) {
 		return EAGAIN;
 	}
-printf("passed case where eagain is return when no free index is found\n");
 	if(identifier > 0) {
-printf("we are in the case where identifier is >0\n");
 		if (is_in_use(identifier)) {
 			return EEXIST;
 		}
-printf("identifier is not in use\n");
 		semas_identifiers[index] = identifier;
 		semaphores[index] = value;
 		return identifier;
@@ -136,7 +130,6 @@ printf("identifier is not in use\n");
 		semaphores[index] = value;
 		return name;
 	} else {
-printf("!!! 2 !!! \n");
 		return EINVAL; /*negative identifier*/
 	}
 	
@@ -149,7 +142,7 @@ PUBLIC int do_semvalue(void) {
 	int index;
 	index = get_index(identifier, semas_identifiers);
 	if (index != NULL)
-		return semaphores[index];
+		return semaphores[index] + 1000000;
 	//else, return some error
 }
 

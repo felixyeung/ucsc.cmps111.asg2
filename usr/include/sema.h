@@ -8,7 +8,7 @@ PUBLIC int seminit(int sem, int value) {
 	m.m1_i1 = sem;
 	m.m1_i2 = value;
 
-	_syscall(PM_PROC_NR, 103, &m);
+	return _syscall(PM_PROC_NR, 103, &m);
 }
 
 PUBLIC int semvalue(int sem) {
@@ -16,7 +16,7 @@ PUBLIC int semvalue(int sem) {
 
 	m.m1_i1 = sem;
 
-	_syscall(PM_PROC_NR, 105, &m);
+	return _syscall(PM_PROC_NR, 105, &m) - 1000000;
 }
 
 PUBLIC int semup(int sem) {
@@ -24,7 +24,7 @@ PUBLIC int semup(int sem) {
 
 	m.m1_i1 = sem;
 
-	_syscall(PM_PROC_NR, 108, &m);
+	return _syscall(PM_PROC_NR, 108, &m);
 }
 
 PUBLIC int semdown(int sem) {
@@ -33,7 +33,7 @@ PUBLIC int semdown(int sem) {
 	m.m1_i1 = sem;
 	m.m1_i2 = getpid();
 
-	_syscall(PM_PROC_NR, 109, &m);
+	return _syscall(PM_PROC_NR, 109, &m);
 }
 
 PUBLIC int semfree(int sem) {
@@ -41,5 +41,5 @@ PUBLIC int semfree(int sem) {
 
 	m.m1_i1 = sem;
 
-	_syscall(PM_PROC_NR, 110, &m);
+	return _syscall(PM_PROC_NR, 110, &m);
 }
