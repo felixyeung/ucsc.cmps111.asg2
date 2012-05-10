@@ -37,12 +37,11 @@ int main() {
 		printf("   Waiting %d\n", wait_unit);
 	}
 	printf("<4> I done doing nothing.\n");
+
+	result = semup(2000);
+	printf("<5> Sem Up: result=%d & e=%d\n", result, e);
 	
-	result = semfree(2000);
-	printf("<5> Free semaphore (return 1 if successful): result=%d & e=%d\n", result, e);
-	
-	result = semvalue(2000);
-	printf("<6> Can we still see value? this should fail: result=%d & e=%d\n", result, e);
+	printf("<6> Program A has no more to do.\n", result, e);
 	
 	return 0;
 }
