@@ -26,10 +26,10 @@ int main() {
 	printf("+-----------------+\n");
 
 	result = semfree(2000);
-	printf("<1> Free semaphore (return 1 if successful): result=%d & e=%d\n", result, e);
+	printf("<1> Free semaphore (return 1 if successful): result=%d & e=%d\n", result, errno);
 	
 	result = semvalue(2000);
-	printf("<2> Can we still see value? this should fail: result=%d & e=%d\n", result, e);
+	printf("<2> Can we still see value? this should fail: result=%d & e=%d\n", result, errno);
 	
 	return 0;
 }

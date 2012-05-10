@@ -25,12 +25,15 @@ int main() {
 	printf("| Program A Start |\n");	
 	printf("+-----------------+\n");
 	result = seminit(2000, 1);
-	printf("<1> Create semaphore named 2000, with value 1: result=%d & e=%d\n", result, e);
+	printf("<1> Create semaphore named 2000, with value 1: result=%d & e=%d\n", result, errno);
 	
 	result = semvalue(2000);
-	printf("<2> Look at value of semaphore[index for indentifier(2000)]: result=%d & e=%d\n", result, e);
+	printf("<2> Look at value of semaphore[index for indentifier(2000)]: result=%d & e=%d\n", result, errno);
 	
-	printf("<3> I am to do nothing for 10 seconds.\n");
+	result = semdown(2000);
+	printf("<3> Do a sem down: result=%d & e=%d\n", result, errno);
+	
+	printf("<4> I am to do nothing for 10 seconds.\n");
 	int wait_unit;
 	for (wait_unit = 1; wait_unit < 11; wait_unit++) {
 		sleep(1);
@@ -39,9 +42,9 @@ int main() {
 	printf("<4> I done doing nothing.\n");
 
 	result = semup(2000);
-	printf("<5> Sem Up: result=%d & e=%d\n", result, e);
+	printf("<5> Sem Up: result=%d & e=%d\n", result, errno);
 	
-	printf("<6> Program A has no more to do.\n", result, e);
+	printf("<6> Program A has no more to do.\n", result, errno);
 	
 	return 0;
 }
