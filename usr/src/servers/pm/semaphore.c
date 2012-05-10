@@ -170,7 +170,7 @@ PUBLIC int do_semup(void) {
 		if (semaphores[index] <= 0) { /*if the new value is less than or equal to zero, we need to wake something up from the queue*/
 			//take a process from the queue
 			int queue_proc = NULL;
-			if(NULL == (queue_proc = leftpop(index))
+			if(NULL == (queue_proc = leftpop(index)))
 				return 0; /*this is not good... empty queue? but why.  hopefully not gonna happen.*/
 			setreply(queue_proc, 1);
 			sendreply();
