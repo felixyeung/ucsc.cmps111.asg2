@@ -187,8 +187,8 @@ PUBLIC int do_semdown(void) {
 	int identifier;
 	identifier = m_in.m1_i1;
 
-	/*since this is called from PM's main.c, who_p is necessarily valid*/
-	printf("who_p = %d\n", who_p);
+	/*since this is called from PM's main.c, who_p is necessarily valid
+	printf("who_p = %d\n", who_p);*/
 	
 	int index;
 	index = get_index(identifier);
@@ -228,6 +228,7 @@ PUBLIC int do_semfree() {
 			 semas_identifiers[index] = NULL;
 			 return 1;
 		}
+		return 0;
 	}
 	return 0;
 }
