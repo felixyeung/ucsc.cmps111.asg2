@@ -31,7 +31,6 @@ PUBLIC int semdown(int sem) {
 	message m;
 
 	m.m1_i1 = sem;
-	m.m1_i2 = getpid();
 
 	return _syscall(PM_PROC_NR, 109, &m);
 }

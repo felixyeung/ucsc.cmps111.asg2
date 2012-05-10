@@ -14,6 +14,7 @@
 #include "mproc.h"
 #include "param.h"
 
+/*101 because 100 entries and we don't use index 0*/
 static int semaphores[101];
 static unsigned int semas_identifiers[101]; /*semas_identifiers[i]==0 means i is an unused index*/
 static int waiting_procs[101][1024]; /*only 10 waiting processes per semaphore*/
@@ -29,6 +30,7 @@ PRIVATE int empty(int sem_index) {
 }
  
  /*return 1 if success to append to queue, else return 0*/
+ /*circular array*/
  PRIVATE int push(int sem_index, int value) {
 	if ((end[sem_index] + 1) % QUEUESIZE == front[sem_index])
 		return 0;
@@ -40,6 +42,8 @@ PRIVATE int empty(int sem_index) {
 	}
  }
  
+ /*returns 0 if queue is empty (failure)
+ returns who_p otherwise*/
  PRIVATE int leftpop(int sem_index) {
 	int result = NULL;
 	if (!empty(sem_index)) {
@@ -49,20 +53,17 @@ PRIVATE int empty(int sem_index) {
 	return result;
  }
 
-
+/*returns first free index
+0 if failure*/
 PRIVATE int find_first_free() {
 	int i;
-	int result;
-	result = NULL;
 	for (i = 1; i < 101;  i++) {
 		//remember to unset semas_identifier in semfree() so we can do this
 		if (semas_identifiers[i] == 0) {
-			result = i;
-			printf("discovered free\n");
-			return result;
+			return i;
 		}
 	}
-	return result;
+	return NULL;
 }
 
 /*returns 1 if identifier is in use, 0 if not in use*/
@@ -76,17 +77,19 @@ PRIVATE int is_in_use(int sem) {
 	return 0;
 }
 
-PRIVATE int get_index(int sem, int* semas_identifiers) {
+/*returns index of a semaphore
+given input of the identifier
+returns 0 on failure to find index*/
+PRIVATE int get_index(int sem) {
+	if(sem <= 0)
+		return 0; /*no nonpositive identifiers*/
 	int i;
-	int result;
-	result = NULL;
 	for (i = 1; i < 101;  i++) {
 		if (semas_identifiers[i] == sem) {
-			result = i;
-			break;
+			return i;
 		}
 	}
-	return result;
+	return 0;
 }
 
 /*initializes a new semaphore,
@@ -103,7 +106,8 @@ PUBLIC int do_seminit(void) {
 	if(value < -1000 || value > 1000) {
 		return EINVAL; /*add to errno.h*/
 	}
-	index = find_first_free();
+	if(0 == (index = find_first_free()))
+		return EAGAIN;
 	if(index == NULL) {
 		return EAGAIN;
 	}
@@ -140,10 +144,11 @@ PUBLIC int do_semvalue(void) {
 	identifier = m_in.m1_i1;
 
 	int index;
-	index = get_index(identifier, semas_identifiers);
+	index = get_index(identifier);
 	if (index != NULL)
 		return semaphores[index] + 1000000;
 	//else, return some error
+	return EINVAL;
 }
 
 /*
@@ -159,46 +164,20 @@ PUBLIC int do_semup(void) {
 	identifier = m_in.m1_i1;
 	
 	int index;
-	index = get_index(identifier, semas_identifiers);
+	index = get_index(identifier);
 	if (index != NULL) {
-		semaphores[index] += 1;
-		if (semaphores[index] > 0) {
-			if (!empty(index)) {
-				
-				//take a process from the queue
-				int piddie;
-				piddie = NULL;
-				piddie = leftpop(index);
-				//TODO:
-				//EXPLICITLY WAKE A PROCESS?
-				
-				//we need to return some kind of result
-				int result;
-				result = 1234;
-				
-				//COPIED FROM SETREPLY
-				
-				/* Fill in a reply message to be sent later to a user process.  System calls
-				 * may occasionally fill in other fields, this is only for the main return
-				 * value, and for setting the "must send reply" flag.
-				 */
-				  register struct mproc *rmp = &mproc[piddie];
-
-				  if(piddie < 0 || piddie >= NR_PROCS)
-					  panic("setreply arg out of range: %d", piddie);
-
-				  rmp->mp_reply.reply_res = result;
-				  rmp->mp_flags |= REPLY;	/* reply pending */
-				
-				
-				  //main.c dispatcher will do sendreply() for us
-				  
-				return piddie;
-			}
+		semaphores[index] += 1; /*increment the value of the semaphore*/
+		if (semaphores[index] <= 0) { /*if the new value is less than or equal to zero, we need to wake something up from the queue*/
+			//take a process from the queue
+			int queue_proc = NULL;
+			if(NULL == (queue_proc = leftpop(index))
+				return 0; /*this is not good... empty queue? but why.  hopefully not gonna happen.*/
+			setreply(queue_proc, 1);
+			sendreply();
 		}
-		return 0;
+		return 1;
 	}
-	return -1;
+	return 0; /*fail due to invalid identifier*/
 }
 
 
@@ -208,20 +187,19 @@ PUBLIC int do_semdown(void) {
 	int identifier;
 	identifier = m_in.m1_i1;
 
-	register struct mproc* rmp = &mproc[m_in.m1_i2];
-	
-	int piddie;
-	piddie = rmp->mp_pid;
+	/*since this is called from PM's main.c, who_p is necessarily valid*/
+	printf("who_p = %d\n", who_p);
 	
 	int index;
-	index = get_index(identifier, semas_identifiers);
+	index = get_index(identifier);
 	if (index != NULL) {
 		semaphores[index] -= 1;
 		if (semaphores[index] < 0) {
 			//append caller into queue
 			
 			//extract pid from object struct to put into queue for semaphores[index]
-			push(index, piddie);
+			if (0 == (push(index, who_p)))
+				return 0; /*maximum processes are waiting on this semaphore*/
 			
 			//FROM signals.c:do_pause()
 			mp->mp_flags |= PAUSED;
@@ -229,11 +207,12 @@ PUBLIC int do_semdown(void) {
 			return(SUSPEND);
 		}
 		else {
-			//nothing. return jibberish?
-			return(100000);
+			//success. return positive jibberish.
+			return(1);
 		}
 	}
-	return(-1234);
+	//semaphore not initialized.
+	return 0;
 }
 
 PUBLIC int do_semfree() {
@@ -241,7 +220,7 @@ PUBLIC int do_semfree() {
 	identifier = m_in.m1_i1;
 	
 	int index;
-	index = get_index(identifier, semas_identifiers);
+	index = get_index(identifier);
 	if (index != NULL) {
 		// if queue is empty, free
 		if (empty(index)) {
