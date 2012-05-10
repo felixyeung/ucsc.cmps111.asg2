@@ -173,7 +173,7 @@ PUBLIC int do_semup(void) {
 			if(NULL == (queue_proc = leftpop(index)))
 				return 0; /*this is not good... empty queue? but why.  hopefully not gonna happen.*/
 			setreply(queue_proc, 1);
-			sendreply();
+			//sendreply();
 		}
 		return 1;
 	}
