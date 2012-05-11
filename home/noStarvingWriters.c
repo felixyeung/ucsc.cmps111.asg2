@@ -16,13 +16,9 @@ void writer() {
 	printf("%d: writer has acquired mutex\n", p);
 	numWriters += 1;
 	semdown(writes);
-	printf("%d: writer has grabbed the semaphore\n", p);
-	lock_release(&mutex);
-	printf("%d: writer has released mutex; now writing\n", p);
+	printf("%d: writer has grabbed the semaphore, now writing\n", p);
 	usleep(rand() % 20000 + 200);
 	printf("%d: writer is done writing\n", p);
-	lock_acquire(&mutex);
-	printf("%d: writer has acquired mutex\n", p);
 	semup(writes);
 	numWriters -= 1;
 	printf("%d: writer has released the semaphore\n", p);
@@ -60,26 +56,23 @@ void reader() {
 int main() {
 	printf("BEGIN NO STARVING WRITER\n");
 	pid_t pid;
-	int i, numProcs = 20;
+	int i, j, numProcs = 15;
 
 	lock_init(&mutex);
 	writes = seminit(0, 1);
-	
 	srand(time(NULL));
 
 	for(i=0; i<numProcs; i++) {
-		
+		j = rand();
 		pid = fork();
-
 		if( pid == 0 ) {
-			printf("new child is...");
-			if(rand()%1 == 0) {
-				printf("reader!\n");
+			printf("%d\n", j%2);
+			if(j % 2 == 0) {
 				reader();
 			} else {
-				printf("writer!\n");
 				writer();
 			}
+			break;
 		}
 	}
 	lock_release(&mutex);
