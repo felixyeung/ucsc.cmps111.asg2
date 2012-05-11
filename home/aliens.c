@@ -4,14 +4,106 @@
 #include <sys/wait.h>
 #include <lockcond.h>
 
+lock mutex;
+int gender1;
+int gender2;
+int gender3;
+int nurse;
+int procreate1;
+int procreate2;
+
+void alien(int gender) {
+	pid_t p = getpid();
+	while(1) {
+		lock_acquire(&mutex);
+		printf("%d: acquired lock\n", p);
+		switch (gender) {
+			case 1:
+				printf("%d: Gender 1 phase 1\n", p);
+				// if there are others waiting
+				if (semvalue(gender2) < 0 && semvalue(gender3) < 0) {
+					semup(gender2);
+					semup(gender3);
+					lock_release(&mutex);
+					printf("%d: Gender 1 wakes 2, 3. ready to procreate.\n", p);
+				}
+				else {
+					//no other genders queued up
+					printf("%d: Cannot pop from 2, 3. 1 going to sleep.\n", p);
+					lock_release(&mutex);
+					semdown(gender1);
+				}
+			break;
+			case 2:
+				printf("%d: Gender 2 phase 1\n", p);
+				if (semvalue(gender1) < 0 && semvalue(gender3) < 0) {
+					semup(gender1);
+					semup(gender3);
+					lock_release(&mutex);
+					printf("%d: Gender 2 wakes 1, 3. ready to procreate.\n", p);
+				}
+				else {
+					//no other genders queued up
+					printf("%d: Cannot pop from 1, 3. 2 going to sleep.\n", p);
+					lock_release(&mutex);
+					semdown(gender2);
+				}
+			break;
+			case 3:
+				printf("%d: Gender 3 phase 1\n", p);
+				if (semvalue(gender1) < 0 && semvalue(gender2) < 0) {
+					semup(gender1);
+					semup(gender2);
+					lock_release(&mutex);
+					printf("%d: Gender 3 wakes 1, 2. ready to procreate.\n", p);
+				}
+				else {
+					//no other genders queued up
+					printf("%d: Cannot pop from 1, 2. 3 going to sleep.\n", p);
+					lock_release(&mutex);
+					semdown(gender3);
+				}
+			break;
+		}
+		switch (gender) {
+			case 1:
+				printf("%d: Gender 1 phase 2\n", p);
+				semdown(procreate1);
+				printf("%d: Gender 1 report procreating finished. \n", p);
+				usleep(rand() % 40000 + 1000);
+				printf("%d: Gender 1 ready to procreate again. \n", p);
+			break;
+			case 2:
+				printf("%d: Gender 2 phase 2\n");
+				semdown(procreate2);
+				printf("%d: Gender 2 report procreating finished. \n", p);
+				usleep(rand() % 40000 + 1000);
+				printf("%d: Gender 2 ready to procreate again. \n", p);
+			break;
+			case 3:
+				printf("%d: Gender 3 phase 2\n");
+				semdown(nurse);
+				usleep(rand() % 200000 + 20000);
+				printf("%d: gender 3 report procreating finished. \n", p);
+				semup(procreate1);
+				semup(procreate2);
+				semup(nurse);
+				usleep(rand() % 40000 + 1000);
+				printf("%d: Gender 3 ready to procreate again. \n", p);
+			break;
+		}
+	}
+} 
+
 int main() {
 	/* these are aliens waiting for a gathering */
-	int gender1 = seminit(0, 0);
-	int gender2 = seminit(0, 0);
-	int gender3 = seminit(0, 0);
-	int nurse = seminit(0, 2);
-	int procreate1 = seminit(0, 0);
-	int procreate2 = seminit(0, 0);
+	gender1 = seminit(0, 0);
+	gender2 = seminit(0, 0);
+	gender3 = seminit(0, 0);
+	nurse = seminit(0, 2);
+	procreate1 = seminit(0, 0);
+	procreate2 = seminit(0, 0);
+	lock_init(&mutex);
 	
 	pid_t pid;
 	pid_t opid = getpid();
@@ -44,79 +136,6 @@ int main() {
 		semfree(nurse);
 		semfree(procreate1);
 		semfree(procreate2);
+		lock_release(&mutex);
 	}
 }
-
-void alien(int gender) {
-	while(1) {
-		switch (gender) {
-			case 1:
-				printf("Gender 1 phase 1\n");
-				// if there are others waiting
-				if (semvalue(gender2) < 0 && semvalue(gender3) < 0) {
-					semup(gender2);
-					semup(gender3);
-					printf("Gender 1 wakes 2, 3. ready to procreate.\n");
-				}
-				else {
-					//no other genders queued up
-					semdown(gender1);
-					printf("Cannot pop from 2, 3. 1 going to sleep.\n");
-				}
-			break;
-			case 2:
-				printf("Gender 2 phase 1\n");
-				if (semvalue(gender1) < 0 && semvalue(gender3) < 0) {
-					semup(gender1);
-					semup(gender3);
-					printf("Gender 2 wakes 1, 3. ready to procreate.\n");
-				}
-				else {
-					//no other genders queued up
-					semdown(gender2);
-					printf("Cannot pop from 1, 3. 2 going to sleep.\n");
-				}
-			break;
-			case 3:
-				printf("Gender 3 phase 1\n");
-				if (semvalue(gender1) < 0 && semvalue(gender2) < 0) {
-					semup(gender1);
-					semup(gender2);
-					printf("Gender 3 wakes 1, 2. ready to procreate.\n");
-				}
-				else {
-					//no other genders queued up
-					semdown(gender3);
-					printf("Cannot pop from 1, 2. 3 going to sleep.\n");
-				}
-			break;
-			
-		}
-		switch (gender) {
-			case 1:
-				printf("Gender 1 phase 2\n");
-				semdown(procreate1);
-				printf("Gender 1 report procreating finished. \n");
-				usleep(rand() % 40000 + 1000);
-				printf("Gender 1 ready to procreate again. \n");
-			break;
-			case 2:
-				printf("Gender 2 phase 2\n");
-				semdown(procreate2);
-				printf("Gender 2 report procreating finished. \n");
-				usleep(rand() % 40000 + 1000);
-				printf("Gender 2 ready to procreate again. \n");
-			break;
-			case 3:
-				printf("Gender 3 phase 2\n");
-				semdown(nurse);
-				usleep(rand() % 200000 + 20000);
-				printf("gender 3 report procreating finished. \n");
-				semup(procreate1);
-				semup(procreate2);
-				semup(nurse);
-				printf("Gender 3 ready to procreate again. \n");
-			break;
-		}
-	}
-} 
