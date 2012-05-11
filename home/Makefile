@@ -3,7 +3,7 @@
 # Felix Yeung (fyeung)
 # Gabe Saluta (gsaluta)
 
-All : prog_A.c prog_B.c prog_C.c prog_D.c
+test : prog_A.c prog_B.c prog_C.c prog_D.c
 	gcc -o A prog_A.c
 	gcc -o B prog_B.c
 	gcc -o C prog_C.c
